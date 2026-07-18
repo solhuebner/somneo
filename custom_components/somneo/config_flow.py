@@ -21,7 +21,7 @@ from .const import CONF_SESSION, DEFAULT_NAME, DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
-def host_valid(host) -> bool:
+def host_valid(host: str) -> bool:
     """Return True if hostname or IP address is valid."""
     with suppress(ValueError):
         if ipaddress.ip_address(host).version == 4:
@@ -58,7 +58,7 @@ class SomneoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     name: str = DEFAULT_NAME
     dev_info: dict | None = None
 
-    async def get_device_info(self):
+    async def get_device_info(self) -> dict:
         """Get device info."""
         somneo = Somneo(self.host)
         dev_info = await self.hass.async_add_executor_job(somneo.get_device_info)
@@ -101,7 +101,8 @@ class SomneoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if host_valid(user_input[CONF_HOST]):
                 try:
                     user_input["dev_info"] = await self.get_device_info()
-                except Exception as ex:
+                except Exception as ex:  # noqa: BLE001
+                    _LOGGER.error("Error connecting to Somneo: %s", ex)
                     errors["base"] = str(ex)
                 else:
                     await self.async_set_unique_id(user_input["dev_info"]["serial"])
@@ -142,15 +143,15 @@ class SomneoOptionsFlow(config_entries.OptionsFlow):
     """Config flow options for Somneo."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialze the Somneo options flow."""
+        """Initialize the Somneo options flow."""
+        self.config_entry = config_entry
 
     async def async_step_init(
-            self,
-            user_input: dict[str, Any] | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
-            return self.async_create_entry(title = "Somneo", data=user_input)
+            return self.async_create_entry(title="Somneo", data=user_input)
 
         return self.async_show_form(
             step_id="init",
@@ -158,10 +159,10 @@ class SomneoOptionsFlow(config_entries.OptionsFlow):
                 {
                     vol.Optional(
                         CONF_SESSION,
-                        default=self.config_entry.options.get(CONF_SESSION, True)
+                        default=self.config_entry.options.get(CONF_SESSION, True),
                     ): bool,
                 }
-            )
+            ),
         )
 
 class CannotConnect(exceptions.HomeAssistantError):

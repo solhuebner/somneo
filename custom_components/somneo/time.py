@@ -1,4 +1,6 @@
 """Time entities for Somneo."""
+from __future__ import annotations
+
 import logging
 from datetime import time
 
@@ -45,8 +47,15 @@ class SomneoTime(SomneoEntity, TimeEntity):
     _attr_native_value = None
     _attr_translation_key = "time"
 
-    def __init__(self, coordinator, unique_id, name, dev_info, alarm):
-        """Initialize number entities."""
+    def __init__(
+        self,
+        coordinator,
+        unique_id: str,
+        name: str,
+        dev_info: dict,
+        alarm: int | str,
+    ) -> None:
+        """Initialize time entity."""
         super().__init__(
             coordinator, unique_id, name, dev_info, "alarm" + str(alarm) + "_time"
         )
@@ -57,10 +66,11 @@ class SomneoTime(SomneoEntity, TimeEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the alarm time value."""
         self._attr_native_value = self.coordinator.data["alarms"][self._alarm]["time"]
 
         self.async_write_ha_state()
 
     async def async_set_value(self, value: time) -> None:
-        """Adjust Hours and Minutes."""
+        """Adjust alarm time."""
         await self.coordinator.async_set_alarm(self._alarm, alarm_time=value)

@@ -1,4 +1,6 @@
 """Number entities for Somneo."""
+from __future__ import annotations
+
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -58,7 +60,14 @@ class SomneoPowerWake(SomneoEntity, NumberEntity):
     _attr_native_max_value = 59
     _attr_translation_key = "powerwake_delta"
 
-    def __init__(self, coordinator, unique_id, name, dev_info, alarm):
+    def __init__(
+        self,
+        coordinator,
+        unique_id: str,
+        name: str,
+        dev_info: dict,
+        alarm: int | str,
+    ) -> None:
         """Initialize number entities."""
         super().__init__(
             coordinator, unique_id, name, dev_info, "alarm" + str(alarm) + "_powerwake_delta"
@@ -70,12 +79,12 @@ class SomneoPowerWake(SomneoEntity, NumberEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        """Handle update"""
+        """Update the PowerWake delta value."""
         self._attr_native_value = self.coordinator.data["alarms"][self._alarm]["powerwake_delta"]
         self.async_write_ha_state()
 
     async def async_set_native_value(self, value: float) -> None:
-        """Called when user adjust Hours / Minutes in the UI"""
+        """Called when user adjusts PowerWake delta in the UI."""
         await self.coordinator.async_set_alarm_powerwake(self._alarm, delta=int(value))
 
 
@@ -93,11 +102,12 @@ class SomneoSnooze(SomneoEntity, NumberEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the snooze time value."""
         self._attr_native_value = self.coordinator.data["snooze_time"]
         self.async_write_ha_state()
 
     async def async_set_native_value(self, value: float) -> None:
-        """Called when user adjust snooze time in the UI"""
+        """Called when user adjusts snooze time in the UI."""
         await self.coordinator.async_set_snooze_time(int(value))
 
 class SomneoSunsetDuration(SomneoEntity, NumberEntity):
@@ -114,12 +124,13 @@ class SomneoSunsetDuration(SomneoEntity, NumberEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the sunset duration value."""
         self._attr_native_value = self.coordinator.data["sunset"]["duration"]
         self.async_write_ha_state()
 
     async def async_set_native_value(self, value: float) -> None:
-        """Called when user adjust snooze time in the UI"""
-        await self.coordinator.async_set_sunset(duration = int(value))
+        """Called when user adjusts sunset duration in the UI."""
+        await self.coordinator.async_set_sunset(duration=int(value))
 
 class SomneoSunsetLevel(SomneoEntity, NumberEntity):
     """Represenation of the Sunset level."""
@@ -135,12 +146,13 @@ class SomneoSunsetLevel(SomneoEntity, NumberEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the sunset level value."""
         self._attr_native_value = self.coordinator.data["sunset"]["level"]
         self.async_write_ha_state()
 
     async def async_set_native_value(self, value: float) -> None:
-        """Called when user adjust snooze time in the UI"""
-        await self.coordinator.async_set_sunset(level = int(value))
+        """Called when user adjusts sunset level in the UI."""
+        await self.coordinator.async_set_sunset(level=int(value))
 
 class SomneoSunsetVolume(SomneoEntity, NumberEntity):
     """Represenation of the Sunset volume."""
@@ -156,16 +168,17 @@ class SomneoSunsetVolume(SomneoEntity, NumberEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the sunset volume value."""
         self._attr_native_value = self.coordinator.data["sunset"]["volume"]
         self.async_write_ha_state()
 
     async def async_set_native_value(self, value: float) -> None:
-        """Called when user adjust snooze time in the UI"""
-        await self.coordinator.async_set_sunset(volume = int(value))
+        """Called when user adjusts sunset volume in the UI."""
+        await self.coordinator.async_set_sunset(volume=int(value))
 
 
 class SomneoDisplayBrightness(SomneoEntity, NumberEntity):
-    """Represenation of the Sunset volume."""
+    """Representation of the display brightness."""
 
     _attr_should_poll = True
     _attr_available = True
@@ -178,9 +191,10 @@ class SomneoDisplayBrightness(SomneoEntity, NumberEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the display brightness value."""
         self._attr_native_value = self.coordinator.data["display_brightness"]
         self.async_write_ha_state()
 
     async def async_set_native_value(self, value: float) -> None:
-        """Called when user adjust snooze time in the UI"""
-        await self.coordinator.async_set_display(brightness = int(value))
+        """Called when user adjusts display brightness in the UI."""
+        await self.coordinator.async_set_display(brightness=int(value))

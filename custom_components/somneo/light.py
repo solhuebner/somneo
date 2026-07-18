@@ -52,12 +52,13 @@ class SomneoLight(SomneoEntity, LightEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the state from coordinator data."""
         if not self.coordinator.data:
             _LOGGER.debug("No data received from coordinator, skipping update.")
             return
-        
+
         self._attr_is_on = self.coordinator.data.get("light_is_on", False)
-        self._attr_brightness = self.coordinator.data.get("light_brightness",0)
+        self._attr_brightness = self.coordinator.data.get("light_brightness", 0)
         self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs: Any) -> None:
@@ -85,14 +86,15 @@ class SomneoNightLight(SomneoEntity, LightEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the state from coordinator data."""
         if not self.coordinator.data:
             _LOGGER.debug("No data received from coordinator, skipping update.")
             return
-        
+
         self._attr_is_on = self.coordinator.data.get("nightlight_is_on", False)
         self.async_write_ha_state()
 
-    async def async_turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Instruct the light to turn on."""
         await self.coordinator.async_toggle_nightlight(True)
 

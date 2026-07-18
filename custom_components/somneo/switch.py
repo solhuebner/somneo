@@ -1,6 +1,8 @@
 """Switch entities for Somneo."""
+from __future__ import annotations
+
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant.components.switch import SwitchEntity
@@ -20,6 +22,9 @@ from .const import (
     DOMAIN,
 )
 from .entity import SomneoEntity
+
+if TYPE_CHECKING:
+    from . import SomneoCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,7 +54,7 @@ async def async_setup_entry(
 
     sunset = [SomneoSunsetToggle(coordinator, unique_id, name, device_info, "sunset")]
 
-    display = [SomneoDisplayToggle(coordinator, unique_id, name, device_info, 'display_on')]
+    display = [SomneoDisplayToggle(coordinator, unique_id, name, device_info, "display_on")]
 
     async_add_entities(alarms, update_before_add=True)
     async_add_entities(pwrwk, update_before_add=True)
@@ -89,17 +94,25 @@ class SomneoAlarmToggle(SomneoEntity, SwitchEntity):
     _attr_should_poll = True
     _attr_translation_key = "alarm"
 
-    def __init__(self, coordinator, unique_id, name, device_info, alarm):
+    def __init__(
+        self,
+        coordinator: SomneoCoordinator,
+        unique_id: str,
+        name: str,
+        device_info: dict,
+        alarm: int | str,
+    ) -> None:
         """Initialize the switches."""
         super().__init__(
             coordinator, unique_id, name, device_info, "alarm" + str(alarm)
         )
 
-        self._attr_translation_placeholders  = {"number": str(alarm)}
+        self._attr_translation_placeholders = {"number": str(alarm)}
         self._alarm = alarm
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the alarm state."""
         self._attr_is_on = self.coordinator.data["alarms"][self._alarm]["enabled"]
 
         self._attr_extra_state_attributes = {
@@ -112,18 +125,17 @@ class SomneoAlarmToggle(SomneoEntity, SwitchEntity):
         }
         self.async_write_ha_state()
 
-    async def async_turn_on(self, **kwargs: Any):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         await self.coordinator.async_toggle_alarm(self._alarm, True)
 
-    async def async_turn_off(self, **kwargs: Any):
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.coordinator.async_toggle_alarm(self._alarm, False)
 
-    # Define service-calls
     async def set_alarm_light(
         self, curve: str = "sunny day", level: int = 20, duration: int = 30
-    ):
+    ) -> None:
         """Adjust the light settings of an alarm."""
         await self.coordinator.async_set_alarm_light(
             self._alarm, curve=curve, level=level, duration=duration
@@ -131,17 +143,17 @@ class SomneoAlarmToggle(SomneoEntity, SwitchEntity):
 
     async def set_alarm_sound(
         self, source: str = "wake-up", level: int = 12, channel: str = "forest birds"
-    ):
+    ) -> None:
         """Adjust the sound settings of an alarm."""
         await self.coordinator.async_set_alarm_sound(
             self._alarm, source=source, level=level, channel=channel
         )
 
-    async def remove_alarm(self):
+    async def remove_alarm(self) -> None:
         """Remove alarm from list in wake-up app."""
         await self.coordinator.async_remove_alarm(self._alarm)
 
-    async def add_alarm(self):
+    async def add_alarm(self) -> None:
         """Add alarm to list in wake-up app."""
         await self.coordinator.async_add_alarm(self._alarm)
 
@@ -152,17 +164,25 @@ class SomneoPowerWakeToggle(SomneoEntity, SwitchEntity):
     _attr_should_poll = True
     _attr_translation_key = "powerwake"
 
-    def __init__(self, coordinator, unique_id, name, device_info, alarm):
+    def __init__(
+        self,
+        coordinator: SomneoCoordinator,
+        unique_id: str,
+        name: str,
+        device_info: dict,
+        alarm: int | str,
+    ) -> None:
         """Initialize the switches."""
         super().__init__(
             coordinator, unique_id, name, device_info, "alarm" + str(alarm) + "_PW"
         )
 
-        self._attr_translation_placeholders  = {"number": str(alarm)}
+        self._attr_translation_placeholders = {"number": str(alarm)}
         self._alarm = alarm
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the powerwake switch state."""
         self._attr_is_on = self.coordinator.data["alarms"][self._alarm]["powerwake"]
         self._attr_extra_state_attributes = {
             "powerwake_delta": self.coordinator.data["alarms"][self._alarm][
@@ -171,11 +191,11 @@ class SomneoPowerWakeToggle(SomneoEntity, SwitchEntity):
         }
         self.async_write_ha_state()
 
-    async def async_turn_on(self, **kwargs: Any):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         await self.coordinator.async_toggle_alarm_powerwake(self._alarm, True)
 
-    async def async_turn_off(self, **kwargs: Any):
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.coordinator.async_toggle_alarm_powerwake(self._alarm, False)
 
@@ -188,6 +208,7 @@ class SomneoSunsetToggle(SomneoEntity, SwitchEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the sunset switch state."""
         self._attr_is_on = self.coordinator.data["sunset"]["is_on"]
         self._attr_extra_state_attributes = {
             "duration": self.coordinator.data["sunset"]["duration"],
@@ -198,11 +219,11 @@ class SomneoSunsetToggle(SomneoEntity, SwitchEntity):
         }
         self.async_write_ha_state()
 
-    async def async_turn_on(self, **kwargs: Any):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         await self.coordinator.async_toggle_sunset(True)
 
-    async def async_turn_off(self, **kwargs: Any):
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.coordinator.async_toggle_sunset(False)
 
@@ -210,17 +231,18 @@ class SomneoDisplayToggle(SomneoEntity, SwitchEntity):
     """Representation of a display always on switch."""
 
     _attr_should_poll = True
-    _attr_translation_key = 'display_on'
+    _attr_translation_key = "display_on"
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the display switch state."""
         self._attr_is_on = self.coordinator.data["display_always_on"]
         self.async_write_ha_state()
 
-    async def async_turn_on(self, **kwargs: Any):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the switch."""
         await self.coordinator.async_set_display(state=True)
 
-    async def async_turn_off(self, **kwargs: Any):
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the switch."""
         await self.coordinator.async_set_display(state=False)

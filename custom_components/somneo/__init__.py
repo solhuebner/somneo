@@ -64,7 +64,9 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_migrate_entry(hass, config_entry: ConfigEntry):
+async def async_migrate_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry
+) -> bool:
     """Migrate old entry."""
     _LOGGER.debug("Migrating from version %s", config_entry.version)
 
@@ -97,7 +99,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
 class SomneoCoordinator(DataUpdateCoordinator[None]):
     """Representation of a Somneo Coordinator."""
 
-    def __init__(self, hass: HomeAssistant, host: str, use_session : bool = True) -> None:
+    def __init__(self, hass: HomeAssistant, host: str, use_session: bool = True) -> None:
         """Initialize Somneo client."""
         self.somneo = Somneo(host, use_session=use_session)
         self.state_lock = asyncio.Lock()
@@ -113,21 +115,21 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
             ),
         )
 
-    async def _async_update(self):
+    async def _async_update(self) -> dict:
         """Fetch the latest data."""
         if self.state_lock.locked():
             return self.data or {}
-        
+
         try:
             data = await self.hass.async_add_executor_job(self.somneo.fetch_data)
 
             if data is None:
                 _LOGGER.debug("Somneo fetch returned None, using previous data")
                 return self.data or {}
-            
+
             return data
-        
-        except Exception as e:
+
+        except Exception as e:  # noqa: BLE001
             _LOGGER.error("Error fetching data from Somneo: %s", e)
             return self.data or {}
 
@@ -165,7 +167,7 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
 
     async def async_set_alarm(
         self, alarm: str, alarm_time: time | None = None, days: str | list | None = None
-    ):
+    ) -> None:
         """Set alarm time."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
@@ -173,7 +175,7 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
             )
             await self.async_request_refresh()
 
-    async def async_toggle_alarm_powerwake(self, alarm: str, state: bool):
+    async def async_toggle_alarm_powerwake(self, alarm: str, state: bool) -> None:
         """Toggle powerwake (default 10 minutes)."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
@@ -183,7 +185,7 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
             )
             await self.async_request_refresh()
 
-    async def async_set_alarm_powerwake(self, alarm: str, delta: int = 0):
+    async def async_set_alarm_powerwake(self, alarm: str, delta: int = 0) -> None:
         """Set powerwake time."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
@@ -202,7 +204,7 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
             await self.hass.async_add_executor_job(self.somneo.snooze_alarm)
             await self.async_request_refresh()
 
-    async def async_set_snooze_time(self, snooze_time):
+    async def async_set_snooze_time(self, snooze_time: int | str) -> None:
         """Set snooze time."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
@@ -212,7 +214,7 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
 
     async def async_set_alarm_light(
         self, alarm: str, curve: str = "sunny day", level: int = 20, duration: int = 30
-    ):
+    ) -> None:
         """Adjust the light settings of an alarm."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
@@ -227,8 +229,8 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
             await self.async_request_refresh()
 
     async def async_set_alarm_sound(
-        self, alarm: str, source="wake-up", level=12, channel="forest birds"
-    ):
+        self, alarm: str, source: str = "wake-up", level: int = 12, channel: str = "forest birds"
+    ) -> None:
         """Adjust the sound settings of an alarm."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
@@ -242,23 +244,23 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
             )
             await self.async_request_refresh()
 
-    async def async_remove_alarm(self, alarm: str):
+    async def async_remove_alarm(self, alarm: str) -> None:
         """Remove alarm from list in Somneo app."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(self.somneo.remove_alarm, alarm)
 
-    async def async_add_alarm(self, alarm: str):
+    async def async_add_alarm(self, alarm: str) -> None:
         """Add alarm to list in Somneo app."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(self.somneo.add_alarm, alarm)
 
-    async def async_player_toggle(self, state: bool):
+    async def async_player_toggle(self, state: bool) -> None:
         """Toggle the audio player."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(self.somneo.toggle_player, state)
             await self.async_request_refresh()
 
-    async def async_set_player_volume(self, volume: float):
+    async def async_set_player_volume(self, volume: float) -> None:
         """Set the volume of the audio player."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
@@ -266,8 +268,8 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
             )
             await self.async_request_refresh()
 
-    async def async_set_player_source(self, source: str):
-        """Set the volume of the audio player."""
+    async def async_set_player_source(self, source: str) -> None:
+        """Set the source of the audio player."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
                 self.somneo.set_player_source, source
@@ -287,7 +289,7 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
         duration: int | None = None,
         sound: str | None = None,
         volume: int | None = None,
-    ):
+    ) -> None:
         """Adjust the sunset settings."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
@@ -301,9 +303,10 @@ class SomneoCoordinator(DataUpdateCoordinator[None]):
                 )
             )
             await self.async_request_refresh()
-    
+
     async def async_set_display(
-        self, state: bool | None = None, brightness: int | None = None):
+        self, state: bool | None = None, brightness: int | None = None
+    ) -> None:
         """Adjust the display."""
         async with self.state_lock:
             await self.hass.async_add_executor_job(
