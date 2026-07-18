@@ -1,4 +1,6 @@
 """Text entities for Somneo."""
+from __future__ import annotations
+
 import logging
 
 from homeassistant.components.text import TextEntity
@@ -43,8 +45,15 @@ class SomneoAlarmDays(SomneoEntity, TextEntity):
     _attr_pattern = "^((tomorrow|mon|tue|wed|thu|fri|sat|sun)(,)?)+$"
     _attr_translation_key = "days_str"
 
-    def __init__(self, coordinator, unique_id, name, device_info, alarm):
-        """Initialize the switches."""
+    def __init__(
+        self,
+        coordinator,
+        unique_id: str,
+        name: str,
+        device_info: dict,
+        alarm: int | str,
+    ) -> None:
+        """Initialize the text entity."""
         super().__init__(
             coordinator, unique_id, name, device_info, "alarm" + str(alarm)
         )
@@ -54,6 +63,7 @@ class SomneoAlarmDays(SomneoEntity, TextEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the alarm days text value."""
         days_list = self.coordinator.data["alarms"][self._alarm]["days"]
         self._attr_native_value = ",".join([str(item) for item in days_list if item])
 

@@ -1,4 +1,6 @@
 """Select entities for Somneo."""
+from __future__ import annotations
+
 import logging
 
 from homeassistant.components.select import SelectEntity
@@ -58,7 +60,14 @@ class SomneoDays(SomneoEntity, SelectEntity):
     _attr_current_option = WORKDAYS
     _attr_translation_key = "days"
 
-    def __init__(self, coordinator, unique_id, name, dev_info, alarm):
+    def __init__(
+        self,
+        coordinator,
+        unique_id: str,
+        name: str,
+        dev_info: dict,
+        alarm: int | str,
+    ) -> None:
         """Initialize select entity for alarm days."""
         super().__init__(coordinator, unique_id, name, dev_info, "alarm" + str(alarm))
         self._attr_translation_placeholders = {"number": str(alarm)}
@@ -66,6 +75,7 @@ class SomneoDays(SomneoEntity, SelectEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the alarm days selection."""
         new_option = self.coordinator.data["alarms"][self._alarm]["days_type"]
         if new_option != self._attr_current_option:
             _LOGGER.debug(
@@ -92,7 +102,7 @@ class SomneoSunsetSound(SomneoEntity, SelectEntity):
     _attr_current_option = "soft_rain"
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return a set of selectable options."""
         return [
             item.replace(" ", "_") for item in self.coordinator.somneo.dusk_sound_themes
@@ -100,6 +110,7 @@ class SomneoSunsetSound(SomneoEntity, SelectEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the sunset sound option."""
         new_option = self.coordinator.data["sunset"]["sound"].replace(" ", "_")
         if new_option != self._attr_current_option:
             _LOGGER.debug(
@@ -125,12 +136,13 @@ class SomneoSunsetCurve(SomneoEntity, SelectEntity):
     _attr_current_option = "sunny_day"
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return a set of selectable options."""
         return [item.replace(" ", "_") for item in self.coordinator.somneo.dusk_light_themes]
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update the sunset curve option."""
         new_option = self.coordinator.data["sunset"]["curve"].replace(" ", "_")
         if new_option != self._attr_current_option:
             _LOGGER.debug(

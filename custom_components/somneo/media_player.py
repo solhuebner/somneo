@@ -1,4 +1,6 @@
 """Media player entities for Somneo."""
+from __future__ import annotations
+
 import logging
 
 from homeassistant.components.media_player import (
@@ -52,6 +54,7 @@ class SomneoMediaPlayer(SomneoEntity, MediaPlayerEntity):
 
     @callback
     def _handle_coordinator_update(self) -> None:
+        """Update media player state from coordinator data."""
         player_data = self.coordinator.data["player"]
         self._attr_state = (
             MediaPlayerState.ON
@@ -64,17 +67,17 @@ class SomneoMediaPlayer(SomneoEntity, MediaPlayerEntity):
         self.async_write_ha_state()
 
     async def async_turn_on(self) -> None:
-        """Instruct the light to turn on."""
+        """Turn the player on."""
         await self.coordinator.async_player_toggle(True)
 
     async def async_turn_off(self) -> None:
-        """Instruct the light to turn off."""
+        """Turn the player off."""
         await self.coordinator.async_player_toggle(False)
 
     async def async_set_volume_level(self, volume: float) -> None:
-        """Set volume level."""
+        """Set the volume level."""
         await self.coordinator.async_set_player_volume(volume)
 
     async def async_select_source(self, source: str) -> None:
-        """Select source."""
+        """Select a source."""
         await self.coordinator.async_set_player_source(source)
